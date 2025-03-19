@@ -1,17 +1,22 @@
 import streamlit as st
-import pandas as pd  
-import os
+from scripts.resume_parser import extract_text_from_pdf
+from scripts.text_processing import preprocess_text
+from scripts.matcher import calculate_match_score
 
-st.title("Samarth - Resume Matcher")  
+st.title("Samarth - Resume Matcher")
 
-# Upload the file
 uploaded_file = st.file_uploader("Upload Your Resume (PDF)", type=["pdf"])
+job_description = st.text_area("Paste Job Description")
 
-if uploaded_file is not None:
-    # Save the file to a temporary location
-    save_path = os.path.join("uploads", uploaded_file.name)
+if uploaded_file and job_description:
+    st.success("Resume uploaded! Processing...")
 
-    with open(save_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    # Extract and preprocess text
+    resume_text = extract_text_from_pdf(uploaded_file)
+    processed_resume = preprocess_text(resume_text)
+    processed_job_desc = preprocess_text(job_description)
 
-    st.success(f"File saved at {save_path}")
+    # Compute match score
+    match_score = calculate_match_score(processed_resume, processed_job_desc)
+
+    st.write(f"**Match Score:** {match_score}%")
