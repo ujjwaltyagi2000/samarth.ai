@@ -14,7 +14,6 @@ joblib==1.4.2
 jsonschema==4.23.0
 jsonschema-specifications==2024.10.1
 MarkupSafe==3.0.2
-mysql-connector-python==8.0.31
 narwhals==1.30.0
 nltk==3.9.1
 numpy==2.2.3
