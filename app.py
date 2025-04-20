@@ -1,14 +1,14 @@
 import streamlit as st
 from scripts.resume_parser import extract_text_from_pdf
 from scripts.text_processing import preprocess_text
-from scripts.matcher import calculate_match_score
+import time
 
 st.title("Samarth - Resume Matcher")
 
 uploaded_file = st.file_uploader("Upload Your Resume (PDF)", type=["pdf"])
 
 if uploaded_file:
-    st.success("Resume uploaded!")
+    st.success("Resume uploaded!", icon="✅")
     resume_text = extract_text_from_pdf(uploaded_file)
     with st.expander("Show Resume Content"):
         st.write(resume_text)
@@ -19,8 +19,6 @@ jd_option = st.radio(
     ("Text Input", "URL (LinkedIn/Naukri/Foundit)"),
 )
 
-job_description = None
-jd_url = None
 
 if jd_option == "Text Input":
     job_description = st.text_area("Paste the job description here")
@@ -39,12 +37,19 @@ if st.button("Process Resume"):
         # Extract and preprocess text
         processed_resume = preprocess_text(resume_text)
         processed_job_desc = preprocess_text(job_description)
+        start_time = time.time()
+        with st.spinner("Wait for it...", show_time=True):
 
-        # Compute match score
-        match_score = calculate_match_score(processed_resume, processed_job_desc)
+            from scripts.new_matcher import calculate_match_score
+
+            # Compute match score
+            match_score = calculate_match_score(processed_resume, processed_job_desc)
+
+            st.success("Done!", icon="✅")
 
         st.write(f"**Match Score:** {match_score}%")
-
+        end_time = time.time()
+        st.write(f"**Time Taken:** {round(end_time - start_time, 2)} seconds")
 
 # Footer
 st.markdown(
