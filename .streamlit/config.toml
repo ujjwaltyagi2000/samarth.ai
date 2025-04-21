@@ -1,0 +1,6 @@
+[server]
+enableCORS = false
+
+[runner]
+# This will run our setup script before launching the app
+preRunCode = "import sys; exec(open('setup.py').read())"

@@ -2,9 +2,21 @@ import streamlit as st
 from scripts.resume_parser import extract_text_from_pdf
 from scripts.text_processing import preprocess_text
 import time
-
 from scripts.matcher import calculate_match_score
+import os
+import sys
 
+# Debugging section - will show in your app
+st.write("### Debugging Info")
+st.write(f"Current working directory: {os.getcwd()}")
+st.write(f"Python version: {sys.version}")
+st.write(f"Directory contents: {os.listdir('.')}")
+if os.path.exists("scripts"):
+    st.write(f"Scripts directory contents: {os.listdir('scripts')}")
+else:
+    st.write("Scripts directory not found!")
+
+# Original app starts here
 st.title("Samarth - Resume Matcher")
 
 uploaded_file = st.file_uploader("Upload Your Resume (PDF)", type=["pdf"])
