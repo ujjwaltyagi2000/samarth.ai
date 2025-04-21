@@ -7,3 +7,4 @@ thinc==8.2.2
 torch==2.0.1
 numpy==1.23.5
 huggingface_hub==0.10.1  # ✅ Added for compatibility
+python-dotenv==1.0.1
