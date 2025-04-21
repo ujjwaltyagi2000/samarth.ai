@@ -6,6 +6,15 @@ from scripts.matcher import calculate_match_score
 import spacy
 import subprocess
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load from .env
+hf_token = os.getenv("HF_TOKEN")
+
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("all-MiniLM-L6-v2", use_auth_token=hf_token)
 
 # Ensure spaCy model is available at runtime (only downloads if missing)
 try:
