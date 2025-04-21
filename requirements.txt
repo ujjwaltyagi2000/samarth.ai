@@ -5,4 +5,5 @@ sentence-transformers==2.2.2
 spacy==3.7.2
 thinc==8.2.2
 torch==2.0.1
-numpy==1.23.5  # ✅ Downgraded for torch compatibility
+numpy==1.23.5
+huggingface_hub==0.10.1  # ✅ Added for compatibility
