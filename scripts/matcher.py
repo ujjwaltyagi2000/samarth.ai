@@ -2,11 +2,12 @@
 
 from sentence_transformers import SentenceTransformer, util
 from scripts.constants import (
-    COMMON_SKILLS,
+    GENERAL_SKILLS,
     EDUCATION_KEYWORDS,
     JOB_ROLES,
     TOOL_SYNONYMS,
 )
+
 import re
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -46,8 +47,15 @@ def calculate_match_score(processed_resume: str, processed_job_desc: str) -> dic
     semantic_score = util.cos_sim(resume_embedding, jd_embedding).item()
 
     # Keyword-based scoring
-    resume_skills = extract_keywords(processed_resume, COMMON_SKILLS)
-    jd_skills = extract_keywords(processed_job_desc, COMMON_SKILLS)
+    # Loop through all categories of skills
+    resume_skills = set()
+    jd_skills = set()
+
+    for category in GENERAL_SKILLS:
+        resume_skills.update(
+            extract_keywords(processed_resume, GENERAL_SKILLS[category])
+        )
+        jd_skills.update(extract_keywords(processed_job_desc, GENERAL_SKILLS[category]))
 
     resume_edu = extract_keywords(processed_resume, EDUCATION_KEYWORDS)
     jd_edu = extract_keywords(processed_job_desc, EDUCATION_KEYWORDS)
