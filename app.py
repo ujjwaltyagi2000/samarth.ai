@@ -1,107 +1,109 @@
 import streamlit as st
 from scripts.resume_parser import extract_text_from_pdf
 from scripts.text_processing import preprocess_text
+import time
 from scripts.matcher import calculate_match_score
-from scripts.gemini_matcher import get_llm_feedback
-
 import spacy
 import subprocess
+
 from dotenv import load_dotenv
 import os
-import time
-from sentence_transformers import SentenceTransformer
 
-# Load environment
-load_dotenv()
+load_dotenv()  # Load from .env
 hf_token = os.getenv("HF_TOKEN")
 
-# Load SentenceTransformer model
-model = SentenceTransformer("all-MiniLM-L6-v2")  # Removed use_auth_token
+from sentence_transformers import SentenceTransformer
 
-# Download spaCy model if needed
+model = SentenceTransformer("all-MiniLM-L6-v2", use_auth_token=hf_token)
+
+# Ensure spaCy model is available at runtime (only downloads if missing)
 try:
     spacy.load("en_core_web_sm")
 except OSError:
     subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
 
-# Title
+# import os
+# import sys
+
+# # Debugging section - will show in your app
+# st.write("### Debugging Info")
+# st.write(f"Current working directory: {os.getcwd()}")
+# st.write(f"Python version: {sys.version}")
+# st.write(f"Directory contents: {os.listdir('.')}")
+# if os.path.exists("scripts"):
+#     st.write(f"Scripts directory contents: {os.listdir('scripts')}")
+# else:
+#     st.write("Scripts directory not found!")
+
+# Original app starts here
 st.title("Samarth - Resume Matcher")
 
-# File upload
 uploaded_file = st.file_uploader("Upload Your Resume (PDF)", type=["pdf"])
 
-if uploaded_file and "resume_text" not in st.session_state:
+if uploaded_file:
     st.success("Resume uploaded!", icon="✅")
-    st.session_state.resume_text = extract_text_from_pdf(uploaded_file)
-
-# Show resume text if available
-if "resume_text" in st.session_state:
+    resume_text = extract_text_from_pdf(uploaded_file)
     with st.expander("Show Resume Content"):
-        st.write(st.session_state.resume_text)
+        st.write(resume_text)
 
-# Job Description input
+# Job Description Input
 st.subheader("Job Description")
 jd_option = st.radio(
     "How would you like to provide the job description?",
     ("Text Input", "URL (LinkedIn/Naukri/Foundit)"),
 )
 
+job_description = None
+jd_url = None
+
 if jd_option == "Text Input":
     job_description = st.text_area("Paste the job description here")
-    if job_description:
-        st.session_state.job_description = job_description
 elif jd_option == "URL (LinkedIn/Naukri/Foundit)":
-    jd_url = st.text_input("Enter the job posting URL")
+    jd_url = st.text_input("Enter the job posting URL (LinkedIn/Foundit/Naukri)")
     if jd_url:
-        st.error("Scraping from URLs is not supported yet. Please use text input.")
+        st.error(
+            "Scraping from job URLs is not yet supported. Please paste the JD manually for now."
+        )
 
-# Processing logic
+# Display warnings only after clicking the "Process" button
 if st.button("Process Resume"):
     if not uploaded_file:
         st.error("Please upload a resume.")
-    elif "job_description" not in st.session_state:
-        st.error("Please provide a job description.")
+    elif jd_option == "Text Input" and not job_description:
+        st.error("Please provide the job description.")
+    elif jd_option == "URL (LinkedIn/Naukri/Foundit)":
+        st.error("This feature is not available yet. Please use the text input option.")
     else:
-        st.success("Resume and JD received! Processing...")
-        processed_resume = preprocess_text(st.session_state.resume_text)
-        processed_jd = preprocess_text(st.session_state.job_description)
+        st.success("Resume and Job Description received! Processing...")
+
+        # Extract and preprocess text
+        processed_resume = preprocess_text(resume_text)
+        processed_job_desc = preprocess_text(job_description)
 
         start_time = time.time()
-        with st.spinner("Matching in progress..."):
-            st.session_state.scores = calculate_match_score(
-                processed_resume, processed_jd
-            )
-        end_time = time.time()
+        with st.spinner("Wait for it..."):
 
-        st.session_state.time_taken = round(end_time - start_time, 2)
+            # Compute match scores and breakdown
+            scores = calculate_match_score(processed_resume, processed_job_desc)
+
+        end_time = time.time()
         st.success("Done!", icon="✅")
 
-# Results display
-if "scores" in st.session_state:
-    scores = st.session_state.scores
+        # Display results
+        st.subheader("Match Score Summary")
+        st.write(f"**Final Match Score:** {scores['final_score']}%")
+        st.write(f"**Time Taken:** {round(end_time - start_time, 2)} seconds")
 
-    st.subheader("Match Score Summary")
-    st.write(f"**Final Match Score:** {scores['final_score']}%")
-    st.write(f"**Time Taken:** {st.session_state.time_taken} seconds")
+        with st.expander("See Detailed Breakdown"):
+            st.write(f"**Semantic Similarity Score:** {scores['semantic_score']}%")
+            st.write(f"**Keyword Match Score:** {scores['keyword_score']}%")
+            st.write(f"**Skill Match:** {scores['skill_match_ratio']:.2f}%")
+            st.write(f"**Education Match:** {scores['edu_match_ratio']:.2f}%")
+            st.write(f"**Role Match:** {'✅ Yes' if scores['role_match'] else '❌ No'}")
+            st.write(f"**Experience Match:** {scores['exp_match_ratio']:.2f}%")
+            st.caption(f"Resume Experience: {scores['resume_exp']} years")
+            st.caption(f"JD Required Experience: {scores['jd_exp']} years")
 
-    with st.expander("See Detailed Breakdown"):
-        st.write(f"**Semantic Similarity Score:** {scores['semantic_score']}%")
-        st.write(f"**Keyword Match Score:** {scores['keyword_score']}%")
-        st.write(f"**Skill Match:** {scores['skill_match_ratio']:.2f}%")
-        st.write(f"**Education Match:** {scores['edu_match_ratio']:.2f}%")
-        st.write(f"**Role Match:** {'✅ Yes' if scores['role_match'] else '❌ No'}")
-        st.write(f"**Experience Match:** {scores['exp_match_ratio']:.2f}%")
-        st.caption(f"Resume Experience: {scores['resume_exp']} years")
-        st.caption(f"JD Required Experience: {scores['jd_exp']} years")
-
-    # Toggle for AI insights
-    if st.toggle("💡 Get AI Insights"):
-        with st.spinner("Generating insights..."):
-            insights = get_llm_feedback(
-                st.session_state.resume_text, st.session_state.job_description
-            )
-        st.markdown("#### Gemini LLM Insights")
-        st.write(insights)
 
 # Footer
 st.markdown(
