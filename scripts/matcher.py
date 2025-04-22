@@ -1,5 +1,3 @@
-# scripts/matcher.py
-
 from sentence_transformers import SentenceTransformer, util
 from scripts.constants import (
     GENERAL_SKILLS,
