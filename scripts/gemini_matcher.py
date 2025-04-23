@@ -1,13 +1,25 @@
-import os
-import google.generativeai as genai
-import json
-import re
+try:
+    import streamlit as st
+    import google.generativeai as genai
+    import json
+    import re
 
-# Load Gemini API key
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    # Configure Gemini
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        model = genai.GenerativeModel("gemini-1.5-pro-latest")
+    except Exception as e:
+        print(f"Error configuring Gemini: {e}")
 
-# Initialize Gemini model
-model = genai.GenerativeModel("gemini-1.5-pro-latest")
+except ImportError as e:
+    print(f"Import error in gemini_matcher.py: {e}")
+
+    # Fallback function that doesn't use missing modules
+    def get_llm_feedback(resume_text: str, job_description: str) -> dict:
+        return {
+            "score": 0,
+            "feedback": ["Failed to load Gemini module. Please check logs."],
+        }
 
 
 def get_llm_feedback(resume_text: str, job_description: str) -> dict:
