@@ -1,46 +1,48 @@
-import streamlit as st
 from scripts.resume_parser import extract_text_from_pdf
-from scripts.text_processing import preprocess_text
-from scripts.matcher import calculate_match_score
-from scripts.gemini_matcher import get_llm_feedback
-
-import spacy
-import subprocess
-from dotenv import load_dotenv
-import os
-import time
 from sentence_transformers import SentenceTransformer
-
+from scripts.text_processing import preprocess_text
+from scripts.gemini_matcher import get_llm_feedback
+from scripts.matcher import calculate_match_score
+from dotenv import load_dotenv
+import streamlit as st
+import subprocess
 import asyncio
+import spacy
+import time
 import sys
+import os
 
+
+# Compatibility for Windows + asyncio
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-# Load environment
+# Load environment variables
 load_dotenv()
-hf_token = os.getenv("HF_TOKEN")
 
-# Load SentenceTransformer model
-model = SentenceTransformer("all-MiniLM-L6-v2")  # Removed use_auth_token
+# Initialize model only once
+if "model" not in st.session_state:
+    st.session_state.model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Download spaCy model if needed
-try:
-    spacy.load("en_core_web_sm")
-except OSError:
-    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+# Load spaCy model if not already loaded
+if "spacy_loaded" not in st.session_state:
+    try:
+        spacy.load("en_core_web_sm")
+    except OSError:
+        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    st.session_state.spacy_loaded = True
 
-# Title
+# App title
 st.title("Samarth - Resume Matcher")
 
-# File upload
+# Upload resume
 uploaded_file = st.file_uploader("Upload Your Resume (PDF)", type=["pdf"])
-
 if uploaded_file and "resume_text" not in st.session_state:
-    st.success("Resume uploaded!", icon="✅")
-    st.session_state.resume_text = extract_text_from_pdf(uploaded_file)
+    with st.spinner("Extracting text from resume..."):
+        st.session_state.resume_text = extract_text_from_pdf(uploaded_file)
+    st.success("Resume uploaded ✅")
 
-# Show resume text if available
+# Show resume content
 if "resume_text" in st.session_state:
     with st.expander("Show Resume Content"):
         st.write(st.session_state.resume_text)
@@ -57,35 +59,40 @@ if jd_option == "Text Input":
     if job_description:
         st.session_state.job_description = job_description
 elif jd_option == "URL (LinkedIn/Naukri/Foundit)":
-    jd_url = st.text_input("Enter the job posting URL")
-    if jd_url:
-        st.error("Scraping from URLs is not supported yet. Please use text input.")
+    st.text_input("Enter the job posting URL")
+    st.error("Scraping from URLs is not supported yet. Please use text input.")
 
-# Processing logic
+
+# Resume processing function
+def process_resume(resume_text, job_description):
+    start_time = time.time()
+
+    processed_resume = preprocess_text(resume_text)
+    processed_jd = preprocess_text(job_description)
+    scores = calculate_match_score(processed_resume, processed_jd)
+
+    end_time = time.time()
+    time_taken = round(end_time - start_time, 2)
+
+    return scores, time_taken
+
+
+# Button: Process Resume
 if st.button("Process Resume"):
     if not uploaded_file:
         st.error("Please upload a resume.")
     elif "job_description" not in st.session_state:
         st.error("Please provide a job description.")
     else:
-        st.success("Resume and JD received! Processing...")
         with st.spinner("Matching in progress..."):
-            start_time = time.time()
-
-            processed_resume = preprocess_text(st.session_state.resume_text)
-            processed_jd = preprocess_text(st.session_state.job_description)
-
-            st.session_state.scores = calculate_match_score(
-                processed_resume, processed_jd
+            scores, time_taken = process_resume(
+                st.session_state.resume_text, st.session_state.job_description
             )
+            st.session_state.scores = scores
+            st.session_state.time_taken = time_taken
+        st.success("Matching complete ✅")
 
-            end_time = time.time()
-
-            st.session_state.time_taken = round(end_time - start_time, 2)
-        st.success("Done!", icon="✅")
-
-
-# Results display
+# Results Display
 if "scores" in st.session_state:
     scores = st.session_state.scores
 
@@ -103,9 +110,9 @@ if "scores" in st.session_state:
         st.caption(f"Resume Experience: {scores['resume_exp']} years")
         st.caption(f"JD Required Experience: {scores['jd_exp']} years")
 
-    # Toggle for AI insights
+    # AI Insights
     if st.toggle("💡 Get AI Insights"):
-        with st.spinner("Generating insights..."):
+        with st.spinner("Generating insights with Gemini..."):
             insights = get_llm_feedback(
                 st.session_state.resume_text, st.session_state.job_description
             )
@@ -115,10 +122,10 @@ if "scores" in st.session_state:
         for point in insights["feedback"]:
             st.markdown(f"- {point}")
 
-        # Create downloadable text
         feedback_text = f"Score: {insights['score']}/100\n\nFeedback:\n" + "\n".join(
             f"- {pt}" for pt in insights["feedback"]
         )
+        # Download insights as .txt button
         st.download_button(
             label="📄 Download Feedback",
             data=feedback_text,
