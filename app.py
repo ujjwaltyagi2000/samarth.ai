@@ -12,6 +12,12 @@ import time
 import sys
 import os
 
+st.set_page_config(
+    page_title="Samarth – Resume Matcher",
+    page_icon="📝",  # Optional: pick an emoji or a favicon path
+    layout="centered",  # or "wide"
+    initial_sidebar_state="auto",
+)
 
 # Compatibility for Windows + asyncio
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
