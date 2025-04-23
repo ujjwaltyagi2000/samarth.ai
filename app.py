@@ -69,18 +69,21 @@ if st.button("Process Resume"):
         st.error("Please provide a job description.")
     else:
         st.success("Resume and JD received! Processing...")
-        processed_resume = preprocess_text(st.session_state.resume_text)
-        processed_jd = preprocess_text(st.session_state.job_description)
-
-        start_time = time.time()
         with st.spinner("Matching in progress..."):
+            start_time = time.time()
+
+            processed_resume = preprocess_text(st.session_state.resume_text)
+            processed_jd = preprocess_text(st.session_state.job_description)
+
             st.session_state.scores = calculate_match_score(
                 processed_resume, processed_jd
             )
-        end_time = time.time()
 
-        st.session_state.time_taken = round(end_time - start_time, 2)
+            end_time = time.time()
+
+            st.session_state.time_taken = round(end_time - start_time, 2)
         st.success("Done!", icon="✅")
+
 
 # Results display
 if "scores" in st.session_state:
@@ -112,6 +115,16 @@ if "scores" in st.session_state:
         for point in insights["feedback"]:
             st.markdown(f"- {point}")
 
+        # Create downloadable text
+        feedback_text = f"Score: {insights['score']}/100\n\nFeedback:\n" + "\n".join(
+            f"- {pt}" for pt in insights["feedback"]
+        )
+        st.download_button(
+            label="📄 Download Feedback",
+            data=feedback_text,
+            file_name="samarth_feedback.txt",
+            mime="text/plain",
+        )
 
 # Footer
 st.markdown(
