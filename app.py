@@ -11,6 +11,12 @@ import os
 import time
 from sentence_transformers import SentenceTransformer
 
+import asyncio
+import sys
+
+if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 # Load environment
 load_dotenv()
 hf_token = os.getenv("HF_TOKEN")
@@ -101,7 +107,11 @@ if "scores" in st.session_state:
                 st.session_state.resume_text, st.session_state.job_description
             )
         st.markdown("#### Gemini LLM Insights")
-        st.write(insights)
+        st.markdown(f"**Score:** {insights['score']}/100")
+        st.markdown("**Feedback:**")
+        for point in insights["feedback"]:
+            st.markdown(f"- {point}")
+
 
 # Footer
 st.markdown(
