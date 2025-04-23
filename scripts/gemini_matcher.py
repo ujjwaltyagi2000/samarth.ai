@@ -1,16 +1,33 @@
-import os
-import google.generativeai as genai
 import json
 import re
 
-# Load Gemini API key
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+try:
+    import streamlit as st
+    import google.generativeai as genai
 
-# Initialize Gemini model
-model = genai.GenerativeModel("gemini-1.5-pro-latest")
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"]
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-pro-latest")
+        GEMINI_AVAILABLE = True
+    except Exception as e:
+        print(f"Gemini config error: {e}")
+        GEMINI_AVAILABLE = False
+
+except ImportError as e:
+    print(f"Import error: {e}")
+    GEMINI_AVAILABLE = False
 
 
 def get_llm_feedback(resume_text: str, job_description: str) -> dict:
+    if not GEMINI_AVAILABLE:
+        return {
+            "score": 0,
+            "feedback": [
+                "❌ Gemini model is unavailable. Check API key or package installation."
+            ],
+        }
+
     prompt = f"""
 You are an AI resume evaluator.
 
@@ -34,12 +51,11 @@ Respond in valid JSON format (no markdown code block, no extra characters):
   ]
 }}
 """
-
     try:
         response = model.generate_content(prompt)
         raw_text = response.text.strip()
 
-        # Sanitize if Gemini adds markdown formatting (```json ... ```)
+        # Remove markdown if present
         if raw_text.startswith("```"):
             raw_text = re.sub(
                 r"^```(?:json)?\s*|\s*```$", "", raw_text.strip(), flags=re.IGNORECASE
@@ -47,11 +63,10 @@ Respond in valid JSON format (no markdown code block, no extra characters):
 
         parsed = json.loads(raw_text)
 
-        # Extra check: truncate feedback to 3 if needed
-        if isinstance(parsed, dict) and "feedback" in parsed:
+        if "feedback" in parsed:
             parsed["feedback"] = parsed["feedback"][:3]
 
         return parsed
 
     except Exception as e:
-        return {"score": 0, "feedback": [f"❌ Unexpected error: {str(e)}"]}
+        return {"score": 0, "feedback": [f"❌ Gemini error: {str(e)}"]}

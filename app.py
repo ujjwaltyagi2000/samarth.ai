@@ -26,11 +26,8 @@ if "model" not in st.session_state:
 
 # Load spaCy model if not already loaded
 if "spacy_loaded" not in st.session_state:
-    try:
-        spacy.load("en_core_web_sm")
-    except OSError:
-        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
-    st.session_state.spacy_loaded = True
+    nlp = spacy.load("en_core_web_sm")
+
 
 # App title
 st.title("Samarth - Resume Matcher")
