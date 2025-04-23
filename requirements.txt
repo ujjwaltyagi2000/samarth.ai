@@ -1,10 +1,13 @@
 streamlit==1.44.1
 nltk==3.9.1
-pymupdf==1.25.5
+PyMuPDF==1.25.5  # Different from your current version
 sentence-transformers==2.2.2
 spacy==3.7.2
 thinc==8.2.2
-torch==2.0.1
-numpy==1.23.5
-huggingface_hub==0.10.1  # ✅ Added for compatibility
-python-dotenv==1.0.1
+python-dotenv
+numpy
+scikit-learn
+requests
+protobuf
+google-generativeai
+huggingface_hub==0.10.1
