@@ -20,6 +20,7 @@ except ImportError as e:
 
 
 def get_llm_feedback(resume_text: str, job_description: str) -> dict:
+    """Returns a relevance score and 3-point feedback from Gemini for resume matching."""
     if not GEMINI_AVAILABLE:
         return {
             "score": 0,
@@ -51,11 +52,12 @@ Respond in valid JSON format (no markdown code block, no extra characters):
   ]
 }}
 """
+
     try:
         response = model.generate_content(prompt)
         raw_text = response.text.strip()
 
-        # Remove markdown if present
+        # Clean markdown formatting if present
         if raw_text.startswith("```"):
             raw_text = re.sub(
                 r"^```(?:json)?\s*|\s*```$", "", raw_text.strip(), flags=re.IGNORECASE
@@ -63,8 +65,8 @@ Respond in valid JSON format (no markdown code block, no extra characters):
 
         parsed = json.loads(raw_text)
 
-        if "feedback" in parsed:
-            parsed["feedback"] = parsed["feedback"][:3]
+        # Ensure feedback has at most 3 points
+        parsed["feedback"] = parsed.get("feedback", [])[:3]
 
         return parsed
 
