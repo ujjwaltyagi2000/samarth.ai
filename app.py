@@ -128,6 +128,9 @@ if "scores" in st.session_state:
         feedback_text = f"Score: {insights['score']}/100\n\nFeedback:\n" + "\n".join(
             f"- {pt}" for pt in insights["feedback"]
         )
+
+        st.write("🔐 Gemini API Key exists:", "GEMINI_API_KEY" in st.secrets)
+
         # Download insights as .txt button
         st.download_button(
             label="📄 Download Feedback",
