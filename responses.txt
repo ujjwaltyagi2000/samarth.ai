@@ -1,0 +1,20 @@
+gemini-2.0-flash{
+    "score": 90,
+  "feedback": [
+    "The resume demonstrates strong alignment with the job description, showcasing proficiency in Python, Pandas, NumPy, Matplotlib, Power BI, and Tableau.",
+    "The candidate has relevant project experience, including web scraping with Selenium and building a resume matcher using BERT and LLMs, which are highlighted as bonus points.",
+    "The candidate possesses a B.Tech degree (acceptable as per the job description) and relevant certifications, indicating a solid foundation in data analysis and machine learning."
+  ]
+}
+
+gemini-2.0-flash-lite{
+    {
+  "score": 95,
+  "feedback": [
+    "The resume is an excellent match, with strong skills in Python, Pandas, NumPy, Matplotlib, Power BI, Tableau, and Selenium, all explicitly requested in the job description.",
+    "The candidate's projects, including the election data analysis and resume matcher, directly address the 'Bonus Points' section and demonstrate practical application of the required skills.",
+    "The B.Tech. in Electrical and Electronics Engineering is acceptable, and the candidate's internship experiences and certifications further support their qualifications as a data analyst."
+  ]
+}
+}
+
