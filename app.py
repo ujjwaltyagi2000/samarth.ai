@@ -125,11 +125,24 @@ if "scores" in st.session_state:
         for point in insights["feedback"]:
             st.markdown(f"- {point}")
 
-        feedback_text = f"Score: {insights['score']}/100\n\nFeedback:\n" + "\n".join(
-            f"- {pt}" for pt in insights["feedback"]
-        )
+        feedback_text = f"""Gemini LLM Score: {insights['score']}/100
 
-        st.write("🔑 GEMINI_API_KEY Loaded:", len(st.secrets["GEMINI_API_KEY"]))
+            AI Feedback:
+            - {insights['feedback'][0]}
+            - {insights['feedback'][1]}
+            - {insights['feedback'][2]}
+
+            SBERT Match Score Summary:
+            Final Match Score: {scores['final_score']}%
+            Semantic Similarity Score: {scores['semantic_score']}%
+            Keyword Match Score: {scores['keyword_score']}%
+            Skill Match: {scores['skill_match_ratio']:.2f}%
+            Education Match: {scores['edu_match_ratio']:.2f}%
+            Role Match: {"Yes" if scores['role_match'] else "No"}
+            Experience Match: {scores['exp_match_ratio']:.2f}%
+            Resume Experience: {scores['resume_exp']} years
+            JD Required Experience: {scores['jd_exp']} years
+            """
 
         # Download insights as .txt button
         st.download_button(
