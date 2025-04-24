@@ -8,7 +8,7 @@ try:
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-pro-latest")
+        model = genai.GenerativeModel("gemini-2.0-flash-lite-001")
         GEMINI_AVAILABLE = True
     except Exception as e:
         print(f"Gemini config error: {e}")
