@@ -3,7 +3,7 @@
 Samarth.AI is an AI-powered Resume-Job Matcher that helps job seekers assess how well their resume aligns with a given job description. Using a hybrid approach of Sentence-BERT and smart keyword analysis, Samarth.AI analyzes resumes, extracts key skills, and provides a relevance score with actionable insights.
 
 🚀 **Live Demo:** [samarth.streamlit.app](https://samarth.streamlit.app/)  
-🚀 **Mirror Link (if above link is down):** [https://samarth-resume-matcher.streamlit.app/](https://samarth-resume-matcher.streamlit.app/)
+🚀 **Mirror Link (if above link is down):** [samarth-resume-matcher.streamlit.app](https://samarth-resume-matcher.streamlit.app/)
 
 ---
 
