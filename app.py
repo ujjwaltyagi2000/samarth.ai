@@ -29,7 +29,13 @@ load_dotenv()
 
 # Initialize model only once
 if "model" not in st.session_state:
-    st.session_state.model = load_model()
+    with st.spinner("Loading model, please wait..."):
+        model = load_model()
+        if model is None:
+            st.error("Failed to load AI model. Please refresh or try again later.")
+            st.stop()
+        st.session_state.model = model
+
 
 # Load spaCy model if not already loaded
 if "spacy_loaded" not in st.session_state:
