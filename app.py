@@ -12,14 +12,15 @@ import time
 import sys
 import os
 
+# Page config
 st.set_page_config(
     page_title="Samarth – Resume Matcher",
-    page_icon="📝",  # Optional: pick an emoji or a favicon path
-    layout="centered",  # or "wide"
+    page_icon="📝",
+    layout="centered",
     initial_sidebar_state="auto",
 )
 
-# Compatibility for Windows + asyncio
+# Windows + asyncio compatibility
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -31,9 +32,8 @@ if "model" not in st.session_state:
     st.session_state.model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Load spaCy model if not already loaded
-if "spacy_loaded" not in st.session_state:
-    nlp = spacy.load("en_core_web_sm")
-
+if "nlp" not in st.session_state:
+    st.session_state.nlp = spacy.load("en_core_web_sm")
 
 # App title
 st.title("Samarth - Resume Matcher")
@@ -67,12 +67,12 @@ elif jd_option == "URL (LinkedIn/Naukri/Foundit)":
 
 
 # Resume processing function
-def process_resume(resume_text, job_description):
+def process_resume(resume_text, job_description, model):
     start_time = time.time()
 
     processed_resume = preprocess_text(resume_text)
     processed_jd = preprocess_text(job_description)
-    scores = calculate_match_score(processed_resume, processed_jd)
+    scores = calculate_match_score(model, processed_resume, processed_jd)
 
     end_time = time.time()
     time_taken = round(end_time - start_time, 2)
@@ -89,7 +89,9 @@ if st.button("Process Resume"):
     else:
         with st.spinner("Matching in progress..."):
             scores, time_taken = process_resume(
-                st.session_state.resume_text, st.session_state.job_description
+                st.session_state.resume_text,
+                st.session_state.job_description,
+                st.session_state.model,
             )
             st.session_state.scores = scores
             st.session_state.time_taken = time_taken
@@ -127,24 +129,23 @@ if "scores" in st.session_state:
 
         feedback_text = f"""Gemini LLM Score: {insights['score']}/100
 
-            AI Feedback:
-            - {insights['feedback'][0]}
-            - {insights['feedback'][1]}
-            - {insights['feedback'][2]}
+AI Feedback:
+- {insights['feedback'][0]}
+- {insights['feedback'][1]}
+- {insights['feedback'][2]}
 
-            SBERT Match Score Summary:
-            Final Match Score: {scores['final_score']}%
-            Semantic Similarity Score: {scores['semantic_score']}%
-            Keyword Match Score: {scores['keyword_score']}%
-            Skill Match: {scores['skill_match_ratio']:.2f}%
-            Education Match: {scores['edu_match_ratio']:.2f}%
-            Role Match: {"Yes" if scores['role_match'] else "No"}
-            Experience Match: {scores['exp_match_ratio']:.2f}%
-            Resume Experience: {scores['resume_exp']} years
-            JD Required Experience: {scores['jd_exp']} years
-            """
+SBERT Match Score Summary:
+Final Match Score: {scores['final_score']}%
+Semantic Similarity Score: {scores['semantic_score']}%
+Keyword Match Score: {scores['keyword_score']}%
+Skill Match: {scores['skill_match_ratio']:.2f}%
+Education Match: {scores['edu_match_ratio']:.2f}%
+Role Match: {"Yes" if scores['role_match'] else "No"}
+Experience Match: {scores['exp_match_ratio']:.2f}%
+Resume Experience: {scores['resume_exp']} years
+JD Required Experience: {scores['jd_exp']} years
+"""
 
-        # Download insights as .txt button
         st.download_button(
             label="📄 Download Feedback",
             data=feedback_text,
