@@ -1,5 +1,4 @@
-# matcher.py
-from sentence_transformers import util
+from sentence_transformers import SentenceTransformer, util
 from scripts.constants import (
     GENERAL_SKILLS,
     EDUCATION_KEYWORDS,
@@ -10,12 +9,19 @@ from scripts.constants import (
 import re
 
 
+# Load the model here, or pass it from the app.py (I'll explain in app.py)
+def load_model():
+    return SentenceTransformer("all-MiniLM-L6-v2")
+
+
+# Function to extract keywords based on given categories
 def extract_keywords(text, keywords):
     text = text.lower()
     found = [kw for kw in keywords if kw in text]
     return set(found)
 
 
+# Function to normalize tools by considering synonyms
 def normalize_tools(tools):
     normalized = set(tools)
     for base, synonyms in TOOL_SYNONYMS.items():
@@ -26,17 +32,16 @@ def normalize_tools(tools):
     return normalized
 
 
+# Function to extract years of experience from the text
 def extract_years_of_experience(text):
-    """Extracts the number of years of experience from the text using regex."""
     matches = re.findall(r"(\d+(?:\.\d+)?)\s*(?:\+?\s*)?(?:years|yrs)", text.lower())
     if matches:
-        years = [
-            float(match) for match in matches if float(match) < 40
-        ]  # avoid false positives
+        years = [float(match) for match in matches if float(match) < 40]
         return max(years) if years else 0
     return 0
 
 
+# Function to calculate match score between resume and job description
 def calculate_match_score(
     model, processed_resume: str, processed_job_desc: str
 ) -> dict:
