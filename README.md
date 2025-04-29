@@ -82,6 +82,4 @@ Submit a pull request once your changes are ready!
 
 This project is licensed under the MIT License.
 
-Here’s the updated `README.md` with a **Tech Stack**, **Contributing**, and a note about the **JD scraping feature being in development**:
-
 ---
