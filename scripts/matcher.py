@@ -1,3 +1,4 @@
+# matcher.py
 from sentence_transformers import SentenceTransformer, util
 from scripts.constants import (
     GENERAL_SKILLS,
@@ -5,23 +6,30 @@ from scripts.constants import (
     JOB_ROLES,
     TOOL_SYNONYMS,
 )
-
 import re
+import os
 
 
-# Load the model here, or pass it from the app.py (I'll explain in app.py)
+# Load the model safely with HuggingFace token
 def load_model():
-    return SentenceTransformer("all-MiniLM-L6-v2")
+    hf_token = os.getenv("HF_TOKEN")
+    try:
+        model = SentenceTransformer("all-MiniLM-L6-v2", use_auth_token=hf_token)
+        return model
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        return None
 
 
-# Function to extract keywords based on given categories
+# (Rest of your code remains unchanged below)
+
+
 def extract_keywords(text, keywords):
     text = text.lower()
     found = [kw for kw in keywords if kw in text]
     return set(found)
 
 
-# Function to normalize tools by considering synonyms
 def normalize_tools(tools):
     normalized = set(tools)
     for base, synonyms in TOOL_SYNONYMS.items():
@@ -32,7 +40,6 @@ def normalize_tools(tools):
     return normalized
 
 
-# Function to extract years of experience from the text
 def extract_years_of_experience(text):
     matches = re.findall(r"(\d+(?:\.\d+)?)\s*(?:\+?\s*)?(?:years|yrs)", text.lower())
     if matches:
@@ -41,16 +48,13 @@ def extract_years_of_experience(text):
     return 0
 
 
-# Function to calculate match score between resume and job description
 def calculate_match_score(
     model, processed_resume: str, processed_job_desc: str
 ) -> dict:
-    # SBERT semantic similarity
     resume_embedding = model.encode(processed_resume, convert_to_tensor=True)
     jd_embedding = model.encode(processed_job_desc, convert_to_tensor=True)
     semantic_score = util.cos_sim(resume_embedding, jd_embedding).item()
 
-    # Keyword-based scoring
     resume_skills = set()
     jd_skills = set()
 
@@ -75,15 +79,13 @@ def calculate_match_score(
     edu_match_ratio = len(resume_edu & jd_edu) / max(len(jd_edu), 1)
     role_match = 1 if resume_roles & jd_roles else 0
 
-    # Experience matching
     resume_exp = extract_years_of_experience(processed_resume)
     jd_exp = extract_years_of_experience(processed_job_desc)
     if jd_exp > 0:
-        exp_match_ratio = min(resume_exp / jd_exp, 1.0)  # Cap at 100%
+        exp_match_ratio = min(resume_exp / jd_exp, 1.0)
     else:
-        exp_match_ratio = 1.0  # No specific experience asked
+        exp_match_ratio = 1.0
 
-    # Weighted scoring
     skill_weight = 0.5
     edu_weight = 0.2
     role_weight = 0.1
