@@ -1,4 +1,5 @@
-from sentence_transformers import SentenceTransformer, util
+# matcher.py
+from sentence_transformers import util
 from scripts.constants import (
     GENERAL_SKILLS,
     EDUCATION_KEYWORDS,
@@ -7,8 +8,6 @@ from scripts.constants import (
 )
 
 import re
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def extract_keywords(text, keywords):
@@ -38,14 +37,15 @@ def extract_years_of_experience(text):
     return 0
 
 
-def calculate_match_score(processed_resume: str, processed_job_desc: str) -> dict:
+def calculate_match_score(
+    model, processed_resume: str, processed_job_desc: str
+) -> dict:
     # SBERT semantic similarity
     resume_embedding = model.encode(processed_resume, convert_to_tensor=True)
     jd_embedding = model.encode(processed_job_desc, convert_to_tensor=True)
     semantic_score = util.cos_sim(resume_embedding, jd_embedding).item()
 
     # Keyword-based scoring
-    # Loop through all categories of skills
     resume_skills = set()
     jd_skills = set()
 
